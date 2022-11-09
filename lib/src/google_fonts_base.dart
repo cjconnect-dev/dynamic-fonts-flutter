@@ -233,11 +233,11 @@ Future<ByteData> _httpFetchFontAndSaveToDevice(
     throw Exception('Failed to load font with url: ${file.url}');
   }
   if (response.statusCode == 200) {
-    if (!_isFileSecure(file, response.bodyBytes)) {
-      throw Exception(
-        'File from ${file.url} did not match expected length and checksum.',
-      );
-    }
+//     if (!_isFileSecure(file, response.bodyBytes)) {
+//       throw Exception(
+//         'File from ${file.url} did not match expected length and checksum.',
+//       );
+//     }
 
     _unawaited(
         file_io.saveFontToDeviceFileSystem(fontName, response.bodyBytes));
