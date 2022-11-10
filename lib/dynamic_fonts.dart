@@ -69,14 +69,20 @@ class DynamicFonts {
   ///
   /// Returns a map where the key is the name of the font family and the value
   /// is the corresponding [DynamicFonts] `TextTheme` method.
-  static Map<String, TextThemeBuilder> _asMapOfTextThemes() =>
-      Map.unmodifiable(_themeMap);
+  static Map<String, TextThemeBuilder> _asMapOfTextThemes() => Map.unmodifiable(_themeMap);
 
-  static void register(String familyName,
-      Map<DynamicFontsVariant, DynamicFontsFile> variantMap) {
+  static void register(String familyName, Map<DynamicFontsVariant, DynamicFontsFile> variantMap) {
     final style = styleBuilder(familyName, variantMap);
     _styleMap[familyName] = style;
     _themeMap[familyName] = themeBuilder(style);
+  }
+
+  static Future<void> registerAsync(String familyName, Map<DynamicFontsVariant, DynamicFontsFile> variantMap) async {
+    await saveFontToDisk(fontFamily: familyName, fonts: variantMap);
+    final style = styleBuilder(familyName, variantMap);
+    _styleMap[familyName] = style;
+    _themeMap[familyName] = themeBuilder(style);
+    return null;
   }
 
   /// Retrieve a font by family name.
@@ -154,8 +160,7 @@ class DynamicFonts {
     return fonts[fontFamily]!(textTheme);
   }
 
-  static TextThemeBuilder themeBuilder(TextStyleBuilder styleBuilder) =>
-      ([textTheme]) {
+  static TextThemeBuilder themeBuilder(TextStyleBuilder styleBuilder) => ([textTheme]) {
         textTheme ??= ThemeData.light().textTheme;
         return TextTheme(
           headline1: styleBuilder(textStyle: textTheme.headline1),
@@ -254,8 +259,7 @@ class DynamicFontsVariant extends GoogleFontsVariant {
 /// }
 /// ```
 abstract class DynamicFontsFile extends GoogleFontsFile {
-  DynamicFontsFile(String expectedFileHash, int expectedLength)
-      : super(expectedFileHash, expectedLength);
+  DynamicFontsFile(String expectedFileHash, int expectedLength) : super(expectedFileHash, expectedLength);
 
   String get url;
 }

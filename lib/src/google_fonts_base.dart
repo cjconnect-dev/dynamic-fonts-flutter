@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui';
 
@@ -107,6 +108,28 @@ TextStyle googleFontsTextStyle({
     fontFamilyFallback: [fontFamily],
   );
 }
+
+Future<void> saveFontToDisk({
+  required String fontFamily,
+  required Map<GoogleFontsVariant, GoogleFontsFile> fonts,
+}) =>
+    Future.wait(
+      fonts.entries.map(
+        (e) {
+          final variant = e.key;
+          final familyWithVariant = GoogleFontsFamilyWithVariant(
+            family: fontFamily,
+            googleFontsVariant: variant,
+          );
+
+          final descriptor = GoogleFontsDescriptor(
+            familyWithVariant: familyWithVariant,
+            file: e.value,
+          );
+          return loadFontIfNecessary(descriptor);
+        },
+      ),
+    );
 
 /// Loads a font into the [FontLoader] with [googleFontsFamilyName] for the
 /// matching [expectedFileHash].
@@ -233,14 +256,7 @@ Future<ByteData> _httpFetchFontAndSaveToDevice(
     throw Exception('Failed to load font with url: ${file.url}');
   }
   if (response.statusCode == 200) {
-//     if (!_isFileSecure(file, response.bodyBytes)) {
-//       throw Exception(
-//         'File from ${file.url} did not match expected length and checksum.',
-//       );
-//     }
-
-    _unawaited(
-        file_io.saveFontToDeviceFileSystem(fontName, response.bodyBytes));
+    unawaited(file_io.saveFontToDeviceFileSystem(fontName, response.bodyBytes));
 
     return ByteData.view(response.bodyBytes.buffer);
   } else {
@@ -276,8 +292,7 @@ String? _findFamilyWithVariantAssetPath(
   for (final assetList in manifestJson.values) {
     for (final String asset in assetList) {
       for (final matchingSuffix in ['.ttf', '.otf'].where(asset.endsWith)) {
-        final assetWithoutExtension =
-            asset.substring(0, asset.length - matchingSuffix.length);
+        final assetWithoutExtension = asset.substring(0, asset.length - matchingSuffix.length);
         if (assetWithoutExtension.endsWith(apiFilenamePrefix)) {
           return asset;
         }
@@ -291,8 +306,7 @@ String? _findFamilyWithVariantAssetPath(
 bool _isFileSecure(GoogleFontsFile file, Uint8List bytes) {
   final actualFileLength = bytes.length;
   final actualFileHash = sha256.convert(bytes).toString();
-  return file.expectedLength == actualFileLength &&
-      file.expectedFileHash == actualFileHash;
+  return file.expectedLength == actualFileLength && file.expectedFileHash == actualFileHash;
 }
 
 void _unawaited(Future<void> future) {}
